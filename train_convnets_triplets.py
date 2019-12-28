@@ -35,8 +35,8 @@ RANDOM_SCALE = True
 INITIAL_EPOCH = 0
 MARGIN = 1.
 
-train_path = '../path_vehicle_model_color_train.txt' # txt每行应该是  imgPath vehicleID modelID colorID
-val_path = '../path_vehicle_model_color_val.txt'  # txt每行应该是  imgPath vehicleID modelID colorID
+train_path = './weights/path_vehicle_model_color_train.txt' # txt每行应该是  imgPath vehicleID modelID colorID
+val_path = './weights/path_vehicle_model_color_val.txt'  # txt每行应该是  imgPath vehicleID modelID colorID
 
 
 # Refer to https://github.com/maciejkula/triplet_recommendations_keras

@@ -39,6 +39,7 @@ def get_attribute_branch(img_w,img_h,use_imagenet=True):
     f_colour=Dense(NUM_COLORS,activation='softmax',name='predict_colour')(f_acs)
 
     model=Model(inputs=inception.input, outputs=[f_model,f_colour])
+    model.summary()
     return model
 
 def train_attribute_branch(BATCH_SIZE):
@@ -54,14 +55,14 @@ def train_attribute_branch(BATCH_SIZE):
         print('Using a single GPU.\n')
     optimizer = SGD(lr=LEARNING_RATE, momentum=0.9, decay=0.0, nesterov=True)
     model.compile(loss=['categorical_crossentropy','categorical_crossentropy'], optimizer=optimizer, metrics=['accuracy'])
-    model_file_saved='./weights/InceptionV3_Vehicle_Model_Colour.h5'
+    model_file_saved='./weights/InceptionV4_vehicleModelColor_facs=1024_epoch={epoch:04d}-loss={loss:.4f}-modelAcc={predictions_model_acc:.4f}-colorAcc={predictions_color_acc:.4f}-val_loss={val_loss:.4f}-val_modelAcc={val_predictions_model_acc:.4f}-val_colorAcc={val_predictions_color_acc:.4f}.h5'
     checkpoint=ModelCheckpoint(model_file_saved,verbose=1)
     reduce_lr=ReduceLROnPlateau(monitor='val_'+'loss', factor=0.5, patience=3, verbose=1, min_lr=0.00001)
     early_stop=EarlyStopping(monitor='val_'+'loss', patience=15, verbose=1)
 
     #data:
-    train_path = './path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
-    val_path = './path_model_color_test.txt'
+    train_path = './weights/path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
+    val_path = './weights/path_model_color_test.txt'
     train_data_lines=open(train_path).readlines()
     train_data_lines = [w for w in train_data_lines if os.path.exists(w.strip().split(' ')[0])]
     train_data_lines=train_data_lines
