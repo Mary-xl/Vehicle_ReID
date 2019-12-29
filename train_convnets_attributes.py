@@ -76,6 +76,8 @@ def train_attribute_branch(BATCH_SIZE):
     num_val=len(val_data_lines)
     validation_steps=int(ceil(num_val*1.0/BATCH_SIZE))
 
+    if os.path.exists(model_file_saved):
+        model = load_model(model_file_saved)
 
     model.fit_generator(
                         generator_batch_multitask(train_data_lines,
