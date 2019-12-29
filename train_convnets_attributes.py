@@ -55,10 +55,11 @@ def train_attribute_branch(BATCH_SIZE):
         print('Using a single GPU.\n')
     optimizer = SGD(lr=LEARNING_RATE, momentum=0.9, decay=0.0, nesterov=True)
     model.compile(loss=['categorical_crossentropy','categorical_crossentropy'], optimizer=optimizer, metrics=['accuracy'])
-    model_file_saved='./weights/vehicleModelColor_facs=1024_epoch={epoch:04d}-loss={loss:.4f}-modelAcc={predictions_model_acc:.4f}-colorAcc={predictions_color_acc:.4f}-val_loss={val_loss:.4f}-val_modelAcc={val_predictions_model_acc:.4f}-val_colorAcc={val_predictions_color_acc:.4f}.h5'
-    checkpoint=ModelCheckpoint(model_file_saved, monitor='val_accuracy',save_best_only=True, mode='max',verbose=1)
+    model_file_saved='./weights/vehicleModelColor.h5'
+    checkpoint = ModelCheckpoint(model_file_saved, monitor='val_loss', verbose=1, save_best_only=True,
+                                 save_weights_only=False, mode='auto', period=1)
     reduce_lr=ReduceLROnPlateau(monitor='val_'+'loss', factor=0.5, patience=3, verbose=1, min_lr=0.00001)
-    early_stop=EarlyStopping(monitor='val_'+'loss', patience=15, verbose=1)
+    early_stop=EarlyStopping(monitor='val_'+'loss', patience=20, verbose=1)
 
     #data:
     train_path = './weights/path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
