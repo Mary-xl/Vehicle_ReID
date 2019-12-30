@@ -14,7 +14,7 @@ from keras.models import load_model
 from keras.optimizers import SGD, RMSprop
 from sklearn.utils import class_weight
 from utils import generator_batch_triplet, generator_batch
-from keras.utils.training_utils import multi_gpu_model
+#from keras.utils.training_utils import multi_gpu_model
 import keras.backend as K
 
 np.random.seed(1024)
@@ -24,7 +24,7 @@ SAVE_FILTERED_LIST = True
 FINE_TUNE_ON_ATTRIBUTES = True
 LEARNING_RATE = 0.00001
 NBR_EPOCHS = 100
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 IMG_WIDTH = 299
 IMG_HEIGHT = 299
 monitor_index = 'loss'
@@ -35,9 +35,9 @@ RANDOM_SCALE = True
 INITIAL_EPOCH = 0
 MARGIN = 1.
 
-train_path = './weights/path_vehicle_model_color_train.txt' # txt每行应该是  imgPath vehicleID modelID colorID
-val_path = './weights/path_vehicle_model_color_val.txt'  # txt每行应该是  imgPath vehicleID modelID colorID
-
+train_path = './dataPath/path_vehicle_model_color_train.txt' # each line:  imgPath vehicleID modelID colorID
+val_path = './dataPath/path_vehicle_model_color_val.txt'  # each line:  imgPath vehicleID modelID colorID
+root_path = ''
 
 # Refer to https://github.com/maciejkula/triplet_recommendations_keras
 
@@ -114,7 +114,7 @@ def filter_data_list(data_list):
     return new_data_list, dic
 
 def get_triplet_branch():
-    attributes_branch=load_model('./weights/InceptionV3_Vehicle_Model_Colour.h5')
+    attributes_branch=load_model('./weights/vehicleModelColor.h5')
     attributes_branch.get_layer(name='global_average_pooling2d_1').name='f_base' #inception.get_layer(index=-1)??
     f_base=attributes_branch.get_layer(name='f_base').output  #why not just use f_base=attributes_branch.get_layer(name='global_average_pooling2d_1').output
     attributes_branch.summary()
@@ -132,7 +132,7 @@ def get_triplet_branch():
     f_sls2=Dense(1024, name='sls2')(f_sls2)
     f_sls2=Activation('relu',name='sls2_relu')(f_sls2) #why not use f_sls2=Dense(1024, activation='relu',name='sls2')(f_sls2)
     f_sls3=Dense(256, name='sls3')(f_sls2)#why 256?
-    sls_branch=Model(attributes_branch.input,f_sls3.output)
+    sls_branch=Model(attributes_branch.input,f_sls3)
 
     # why sls_branch can extract the features without compiling and training the branch model?
     f_sls_anchor=sls_branch(anchor)
@@ -153,7 +153,7 @@ def train_model():
                   optimizer=optimizer, metrics=["accuracy"] )
     model.summary()
 
-    model_file_saved="./weights/InceptionV3_Triplet_epoch={epoch:04d}-loss={loss:.4f}-modelAcc={predictions_model_acc:.4f}-colorAcc={predictions_color_acc:.4f}-val_loss={val_loss:.4f}-val_modelAcc={val_predictions_model_acc:.4f}-val_colorAcc={val_predictions_color_acc:.4f}.h5"
+    model_file_saved="./weights/Triplet_epoch={epoch:04d}-loss={loss:.4f}-modelAcc={predictions_model_acc:.4f}-colorAcc={predictions_color_acc:.4f}-val_loss={val_loss:.4f}-val_modelAcc={val_predictions_model_acc:.4f}-val_colorAcc={val_predictions_color_acc:.4f}.h5"
     checkpoint=ModelCheckpoint(model_file_saved,verbose=1)
     reduce_lr = ReduceLROnPlateau(monitor='val_'+monitor_index, factor=0.5,
                   patience=5, verbose=1, min_lr=0.00001)
@@ -162,11 +162,11 @@ def train_model():
     # 读取训练集数据
     train_data_lines = open(train_path).readlines()
     # Check if image path exists.
-    train_data_lines = [w for w in train_data_lines if os.path.exists(w.strip().split(' ')[0])]
+    train_data_lines = [root_path+w for w in train_data_lines if os.path.exists(root_path+w.strip().split(' ')[0])]
 
     train_data_lines, dic_train_data_lines = filter_data_list(train_data_lines)  # 过滤掉一些不能进行triplet loss计算的样本
-    #train_data_lines = train_data_lines[0:8]  # 资源有限，设置为8
-    nbr_train = len(train_data_lines)  # 训练集样本数量
+    train_data_lines = train_data_lines
+    nbr_train = len(train_data_lines)
     print('# Train Images: {}.'.format(nbr_train))
     steps_per_epoch = int(ceil(nbr_train * 1. / BATCH_SIZE))  # 批次的数目
 
@@ -182,8 +182,8 @@ def train_model():
 
     # 读取验证集数据  验证集不需要过滤吗？因为验证集不需要计算损失，只需要计算评价指标，也就是车型、颜色分类准确率。
     val_data_lines = open(val_path).readlines()
-    val_data_lines = [w for w in val_data_lines if os.path.exists(w.strip().split(' ')[0])]
-    val_data_lines = val_data_lines[0:8]# 资源有限，设置为8
+    val_data_lines = [root_path+w for w in val_data_lines if os.path.exists(root_path+w.strip().split(' ')[0])]
+    val_data_lines = val_data_lines
     nbr_val = len(val_data_lines)
     print('# Val Images: {}.'.format(nbr_val))
     validation_steps = int(ceil(nbr_val * 1. / BATCH_SIZE))
@@ -196,13 +196,14 @@ def train_model():
                         shuffle = False, augment = False),
 
                         validation_steps = validation_steps,
-                        callbacks = [checkpoint], initial_epoch =    INITIAL_EPOCH,
+                        callbacks = [checkpoint], initial_epoch =INITIAL_EPOCH,
                         max_queue_size = 100, workers = 1, use_multiprocessing=False)
 
 
 
 
-
+if __name__=='__main__':
+    train_model()
 
 
 

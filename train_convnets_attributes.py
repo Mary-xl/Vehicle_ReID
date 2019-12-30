@@ -62,8 +62,8 @@ def train_attribute_branch(BATCH_SIZE):
     early_stop=EarlyStopping(monitor='val_'+'loss', patience=20, verbose=1)
 
     #data:
-    train_path = './weights/path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
-    val_path = './weights/path_model_color_test.txt'
+    train_path = './dataPath/path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
+    val_path = './dataPath/path_model_color_test.txt'
     train_data_lines=open(train_path).readlines()
     train_data_lines = [w for w in train_data_lines if os.path.exists(w.strip().split(' ')[0])]
     train_data_lines=train_data_lines
