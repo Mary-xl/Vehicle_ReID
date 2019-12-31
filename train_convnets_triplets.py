@@ -34,11 +34,14 @@ RANDOM_SCALE = True
 #nbr_gpus = len(GPUS.split(','))
 INITIAL_EPOCH = 0
 MARGIN = 1.
+LOCAL=False
 
 train_path = './dataPath/path_vehicle_model_color_train.txt' # each line:  imgPath vehicleID modelID colorID
 val_path = './dataPath/path_vehicle_model_color_val.txt'  # each line:  imgPath vehicleID modelID colorID
-root_path = ''
-
+if LOCAL==True:
+    root_path = '/home/mary/AI'
+else:
+    root_path=''
 # Refer to https://github.com/maciejkula/triplet_recommendations_keras
 
 def identity_loss(y_true, y_pred):
@@ -141,6 +144,7 @@ def get_triplet_branch():
 
     loss=Lambda(triplet_loss, output_shape=(1,))([f_sls_anchor,f_sls3_positive,f_sls3_negative])
     model = Model(inputs=[anchor, positive, negative], outputs=[f_model, f_colour, loss])
+    #model = Model(inputs=[anchor, positive, negative], outputs=loss)
 
     return model
 
@@ -150,7 +154,10 @@ def train_model():
     optimizer=SGD(lr=LEARNING_RATE, momentum=0.9, decay=0.0, nesterov=True)
     #identity loss?
     model.compile(loss=["categorical_crossentropy","categorical_crossentropy",identity_loss],
+                  loss_weights=[0.2,0.2,1],
                   optimizer=optimizer, metrics=["accuracy"] )
+    # model.compile(loss= identity_loss,
+    #               optimizer=optimizer, metrics=["accuracy"])
     model.summary()
 
     model_file_saved="./weights/Triplet_epoch={epoch:04d}-loss={loss:.4f}-modelAcc={predictions_model_acc:.4f}-colorAcc={predictions_color_acc:.4f}-val_loss={val_loss:.4f}-val_modelAcc={val_predictions_model_acc:.4f}-val_colorAcc={val_predictions_color_acc:.4f}.h5"
