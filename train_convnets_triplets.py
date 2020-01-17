@@ -34,7 +34,7 @@ RANDOM_SCALE = True
 #nbr_gpus = len(GPUS.split(','))
 INITIAL_EPOCH = 0
 MARGIN = 1.
-LOCAL=False
+LOCAL=True
 
 train_path = './dataPath/path_vehicle_model_color_train.txt' # each line:  imgPath vehicleID modelID colorID
 val_path = './dataPath/path_vehicle_model_color_val.txt'  # each line:  imgPath vehicleID modelID colorID
@@ -61,7 +61,7 @@ def triplet_loss(vects):
 
     dis_anchor_negative = K.sum(K.square(K.abs(f_anchor - f_negative)),
                                          axis = -1, keepdims = True)
-    loss = dis_anchor_positive + MARGIN - dis_anchor_negative
+    loss = K.sum(K.maximum(dis_anchor_positive + MARGIN - dis_anchor_negative,0),axis=0)
     return loss
 
 # 过滤掉一些不能进行triplet loss计算的样本
@@ -145,7 +145,7 @@ def get_triplet_branch():
     loss=Lambda(triplet_loss, output_shape=(1,))([f_sls_anchor,f_sls3_positive,f_sls3_negative])
     model = Model(inputs=[anchor, positive, negative], outputs=[f_model, f_colour, loss])
     #model = Model(inputs=[anchor, positive, negative], outputs=loss)
-
+    model.summary()
     return model
 
 def train_model():
@@ -195,12 +195,10 @@ def train_model():
     print('# Val Images: {}.'.format(nbr_val))
     validation_steps = int(ceil(nbr_val * 1. / BATCH_SIZE))
 
-    model.fit_generator(generator_batch_triplet(train_data_lines, dic_train_data_lines,mode = 'train', nbr_class_one = NBR_MODELS, nbr_class_two = NBR_COLORS,batch_size = BATCH_SIZE, img_width = IMG_WIDTH,img_height = IMG_HEIGHT, random_scale = RANDOM_SCALE,shuffle = True, augment = False),steps_per_epoch = steps_per_epoch, epochs = NBR_EPOCHS, verbose = 1,
+    model.fit_generator(generator_batch_triplet(train_data_lines, dic_train_data_lines,mode = 'train', nbr_class_one = NBR_MODELS, nbr_class_two = NBR_COLORS,batch_size = BATCH_SIZE, img_width = IMG_WIDTH,img_height = IMG_HEIGHT, random_scale = RANDOM_SCALE,shuffle = True, augment = False),
+                        steps_per_epoch = steps_per_epoch, epochs = NBR_EPOCHS, verbose = 1,
                         validation_data = generator_batch_triplet(val_data_lines, { },# 这里是空的，原因是不需要求损失，不需要找anchor的positive或negative
-                        mode = 'val', nbr_class_one = NBR_MODELS, nbr_class_two = NBR_COLORS,
-                        batch_size = BATCH_SIZE, img_width = IMG_WIDTH,
-                        img_height = IMG_HEIGHT,
-                        shuffle = False, augment = False),
+                                         mode = 'val', nbr_class_one = NBR_MODELS, nbr_class_two = NBR_COLORS, batch_size = BATCH_SIZE, img_width = IMG_WIDTH, img_height = IMG_HEIGHT,shuffle = False, augment = False),
 
                         validation_steps = validation_steps,
                         callbacks = [checkpoint], initial_epoch =INITIAL_EPOCH,

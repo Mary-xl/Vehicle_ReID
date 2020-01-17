@@ -26,9 +26,14 @@ IMG_HEIGHT = 299
 BATCH_SIZE = 32
 RANDOM_SCALE = True
 NUM_EPOCHS=5
+LOCAL=False
 INITIAL_EPOCH = 0
 nbr_gpus = len(GPUS.split(','))
 
+if LOCAL==True:
+    root_path = '/home/mary/AI'
+else:
+    root_path=''
 
 def get_attribute_branch(img_w,img_h,use_imagenet=True):
     inception=InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(img_w,img_h,3), pooling='avg' )
@@ -65,13 +70,13 @@ def train_attribute_branch(BATCH_SIZE):
     train_path = './dataPath/path_model_color_train.txt'  # ./train_vehicleModelColor_list.txt
     val_path = './dataPath/path_model_color_test.txt'
     train_data_lines=open(train_path).readlines()
-    train_data_lines = [w for w in train_data_lines if os.path.exists(w.strip().split(' ')[0])]
+    train_data_lines = [root_path+w for w in train_data_lines if os.path.exists(root_path+w.strip().split(' ')[0])]
     train_data_lines=train_data_lines
     num_train=len(train_data_lines)
     steps_per_epoch=int(ceil(num_train*1.0/BATCH_SIZE))
 
     val_data_lines=open(val_path).readlines()
-    val_data_lines = [w for w in val_data_lines if os.path.exists(w.strip().split(' ')[0])]
+    val_data_lines = [root_path+w for w in val_data_lines if os.path.exists(root_path+w.strip().split(' ')[0])]
     val_data_lines=val_data_lines
     num_val=len(val_data_lines)
     validation_steps=int(ceil(num_val*1.0/BATCH_SIZE))
