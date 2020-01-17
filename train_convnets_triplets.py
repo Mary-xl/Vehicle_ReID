@@ -34,7 +34,7 @@ RANDOM_SCALE = True
 #nbr_gpus = len(GPUS.split(','))
 INITIAL_EPOCH = 0
 MARGIN = 1.
-LOCAL=True
+LOCAL=False
 
 train_path = './dataPath/path_vehicle_model_color_train.txt' # each line:  imgPath vehicleID modelID colorID
 val_path = './dataPath/path_vehicle_model_color_val.txt'  # each line:  imgPath vehicleID modelID colorID
